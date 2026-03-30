@@ -1,0 +1,21 @@
+/* Esto solo se aplica al imprimir */
+@media print {
+  /* Ocultar todo lo que no sea el recibo */
+  nav, button, .no-print, form, .busqueda-container {
+    display: none !important;
+  }
+
+  /* Ajustar el contenedor del recibo para que ocupe toda la hoja */
+  .recibo-impresion {
+    display: block !important;
+    width: 100%;
+    border: none !important;
+    margin: 0;
+    padding: 20px;
+  }
+}
+
+/* En la pantalla normal, ocultamos el diseño del recibo */
+.recibo-impresion {
+  display: none;
+}
