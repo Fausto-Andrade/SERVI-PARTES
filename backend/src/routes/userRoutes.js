@@ -8,6 +8,7 @@ router.get('/', userController.listar);
 
 // Rutas con parámetros
 router.put('/reset-password/:id', userController.actualizarPassword);
-router.delete('/:id', userController.eliminar);
+router.put('/desactivar/:id', userController.desactivar);
+// router.delete('/:id', userController.eliminar);
 
 module.exports = router;

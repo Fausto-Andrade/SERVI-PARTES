@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { getOrdenes, createOrden, updateOrden } from '../services/ordenService';
 import { getClientes } from '../services/clienteService';
 import { getTecnicos } from '../services/tecnicoService';
@@ -36,6 +36,8 @@ const OrdenesPage = () => {
 
     const [montoASumar, setMontoASumar] = useState('');
     const [historialAbonos, setHistorialAbonos] = useState([]);
+    const selectTipoOrdenRef = useRef(null);
+    const ultimoInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         tipo_orden: 'nueva', 
@@ -46,6 +48,14 @@ const OrdenesPage = () => {
         estado_pago: 'Pendiente', abono_inicial: 0,
         estado: 'Recibido'
     });
+
+    useEffect(() => {
+        if (selectTipoOrdenRef.current) {
+            selectTipoOrdenRef.current.focus();
+        }
+    }, []); 
+
+    // --- CARGA DE DATOS Y LÓGICA ---
 
     const cargarTodo = useCallback(async () => {
         try {
@@ -94,6 +104,7 @@ const OrdenesPage = () => {
         }
     }, [formData.tipo_orden, ordenes, editando]);
 
+    // --- CÁLCULOS ---
     const listaCombinada = [...personalRecepcion, ...admins];
     const listaReceptores = Array.from(new Map(listaCombinada.map(p => [p.nombre || p.username, p])).values());
 
@@ -105,45 +116,51 @@ const OrdenesPage = () => {
     
     const mostrarCheckFinalizado = formData.estado === 'Entregado' && formData.estado_pago === 'Pagado';
 
+    //FOCO AL AGREGAR: Solo cuando el usuario hace clic físicamente en el botón
+    const agregarRepuesto = () => {
+        setRepuestos([...repuestos, { descripcion: '', valor: '' }]);
+        
+        // El foco se ejecuta DESPUÉS de que React actualiza el DOM
+        setTimeout(() => {
+            if (ultimoInputRef.current) {
+                ultimoInputRef.current.focus();
+            }
+        }, 0);
+    };
 
     const seleccionarOrden = (orden) => {
-    setEditando(true);
-    setIdOrdenActual(orden.id_orden_servicio);
+        setEditando(true);
+        setIdOrdenActual(orden.id_orden_servicio);
 
-    // 1. PROCESAR REPUESTOS (Descomponer el string del server a objetos del form)
-    // Ejemplo esperado: "Filtro ($25000), Aceite ($85000)" -> [{descripcion: "Filtro", valor: "25000"}, ...]
-    let repuestosFormateados = [{ descripcion: '', valor: '' }];
-    
-    if (orden.categoria_servicio && orden.categoria_servicio.trim() !== "") {
-        const items = orden.categoria_servicio.split(', ');
-        repuestosFormateados = items.map(item => {
-            // Regex para capturar lo que está antes del paréntesis y lo que está dentro del ($...)
-            const match = item.match(/(.*?) \(\$(.*?)\)/);
-            return {
-                descripcion: match ? match[1] : item,
-                valor: match ? match[2] : ''
-            };
-        });
-    }
-    setRepuestos(repuestosFormateados);
+        let repuestosFormateados = [{ descripcion: '', valor: '' }];
+        
+        if (orden.categoria_servicio && orden.categoria_servicio.trim() !== "") {
+            const items = orden.categoria_servicio.split(', ');
+            repuestosFormateados = items.map(item => {
+                const match = item.match(/(.*?) \(\$(.*?)\)/);
+                return {
+                    descripcion: match ? match[1] : item,
+                    valor: match ? match[2] : ''
+                };
+            });
+        }
+        setRepuestos(repuestosFormateados);
 
-    // 2. BUSCAR HISTORIAL DE ABONOS (Local Storage o Saldo Inicial con Hora)
-    const historialGuardado = localStorage.getItem(`historial_orden_${orden.id_orden_servicio}`);
-    
-    if (historialGuardado) {
-        setHistorialAbonos(JSON.parse(historialGuardado));
-    } else if (Number(orden.abono_inicial) > 0) {
-        const fechaOriginal = new Date(orden.fecha_ingreso);
-        const saldoInicial = [{
-            monto: orden.abono_inicial,
-            fecha: fechaOriginal.toLocaleDateString(),
-            // Ahora extraemos la hora real en lugar de solo el texto
-            hora: fechaOriginal.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (Inicial)'
-        }];
-        setHistorialAbonos(saldoInicial);
-    } else {
-        setHistorialAbonos([]);
-    }
+        const historialGuardado = localStorage.getItem(`historial_orden_${orden.id_orden_servicio}`);
+        
+        if (historialGuardado) {
+            setHistorialAbonos(JSON.parse(historialGuardado));
+        } else if (Number(orden.abono_inicial) > 0) {
+            const fechaOriginal = new Date(orden.fecha_ingreso);
+            const saldoInicial = [{
+                monto: orden.abono_inicial,
+                fecha: fechaOriginal.toLocaleDateString(),
+                hora: fechaOriginal.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (Inicial)'
+            }];
+            setHistorialAbonos(saldoInicial);
+        } else {
+            setHistorialAbonos([]);
+        }
 
     // 3. CARGAR DATOS DEL FORMULARIO
     setFormData({
@@ -204,7 +221,7 @@ const OrdenesPage = () => {
         return;
     }
 
-    // 2. VALIDACIÓN: No permitir que el abono supere el saldo
+    // VALIDACIÓN: No permitir que el abono supere el saldo
     if (valorNuevoAbono > saldoPendiente) {
         Swal.fire({
             icon: 'error',
@@ -216,7 +233,7 @@ const OrdenesPage = () => {
         return;
     }
 
-    // 3. PROCESO DE REGISTRO (Si pasa las validaciones)
+    // PROCESO DE REGISTRO (Si pasa las validaciones)
     const nuevoTotalAbonado = Number(formData.abono_inicial) + valorNuevoAbono;
     
     const nuevoRegistro = {
@@ -433,10 +450,16 @@ const OrdenesPage = () => {
                     <div style={grid3Col}>
                         <div>
                             <label style={labelStyle}>TIPO DE INGRESO</label>
-                            <select name="tipo_orden" value={formData.tipo_orden} onChange={handleChange} style={inputStyle} disabled={editando}>
-                                <option value="nueva">Orden Nueva</option>
-                                <option value="garantia">Garantía</option>
-                                <option value="reingreso">Reingreso</option>
+                            <select 
+                                ref={selectTipoOrdenRef}
+                                name="tipo_orden" value={formData.tipo_orden} 
+                                onChange={handleChange} 
+                                style={inputStyle} 
+                                disabled={editando}
+                                >
+                                    <option value="nueva">Orden Nueva</option>
+                                    <option value="garantia">Garantía</option>
+                                    <option value="reingreso">Reingreso</option>
                             </select>
                         </div>
 
@@ -512,20 +535,37 @@ const OrdenesPage = () => {
                         </div>
                     </div>
 
-                    {/* SECCIÓN DE REPUESTOS */}
+                    {/* SECCIÓN DE REPUESTOS CON FOCO AUTOMÁTICO */}
                     <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', marginTop: '20px', border: '1px solid #eee' }}>
-                        <h4 style={{marginTop: 0}}>🔧 Repuestos y Adicionales</h4>
-                        {repuestos.map((rep, index) => (
-                            <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                <input style={{ ...inputStyle, flex: 3 }} placeholder="Descripción" value={rep.descripcion} onChange={(e) => handleRepuestoChange(index, 'descripcion', e.target.value)} />
-                                <input style={{ ...inputStyle, flex: 1 }} type="number" placeholder="$" value={rep.valor} onChange={(e) => handleRepuestoChange(index, 'valor', e.target.value)} />
-                                {repuestos.length > 1 && (
+                    <h4 style={{marginTop: 0}}>🔧 Repuestos y Adicionales</h4>
+                    {repuestos.map((rep, index) => (
+                        <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                            <input 
+                                // Asignamos la referencia SOLO al último elemento del array
+                                ref={index === repuestos.length - 1 ? ultimoInputRef : null}
+                                style={{ ...inputStyle, flex: 3 }} 
+                                placeholder="Descripción" 
+                                value={rep.descripcion} 
+                                onChange={(e) => handleRepuestoChange(index, 'descripcion', e.target.value)} 
+                            />
+                            <input 
+                                style={{ ...inputStyle, flex: 1 }} 
+                                type="number" 
+                                placeholder="$" 
+                                value={rep.valor} 
+                                onChange={(e) => handleRepuestoChange(index, 'valor', e.target.value)} 
+                            />
+
+                            {/* Eliminar input de repuestos adicionales */}
+                            {repuestos.length > 1 && (
                                     <button type="button" onClick={() => setRepuestos(repuestos.filter((_, i) => i !== index))} style={btnDeleteStyle}>🗑️</button>
                                 )}
-                            </div>
-                        ))}
-                        <button type="button" onClick={() => setRepuestos([...repuestos, { descripcion: '', valor: '' }])} style={{...btnSmall, background: '#3498db'}}>+ Agregar Ítem</button>
-                    </div>
+                        </div>
+                    ))}
+                    <button type="button" onClick={agregarRepuesto} style={{...btnSmall, background: '#3498db'}}>
+                        + Agregar Ítem
+                    </button>
+                </div>
                     
                     {/* SECCIÓN DE PAGOS Y TOTALES */}
                     <div style={billingGrid}>
@@ -544,16 +584,16 @@ const OrdenesPage = () => {
                                 >
                                     <option value="Pendiente">Pendiente</option>
                                     <option value="Parcial">Abono Parcial</option>
-                                    <option value="Pagado">Pagado Total</option>
+                                    <option value="Pagado">Pago Total</option>
                                 </select>
                                 
                                 <input 
                                     type="number" 
                                     value={montoASumar} 
                                     onChange={(e) => setMontoASumar(e.target.value)} 
-                                    placeholder="Nuevo Abono" 
                                     style={{
-                                        ...inputStyle, 
+                                        ...inputStyle,
+                                        fontWeight: 'bold', color: '#165be6', fontSize: '25px', 
                                         flex: 2,
                                         background: (formData.estado_pago === 'Pendiente' || formData.estado_pago === 'Pagado') ? '#f5f5f5' : 'white'
                                     }} 
@@ -655,7 +695,7 @@ const OrdenesPage = () => {
                 {/* TABLA DE ÓRDENES Y BÚSQUEDA */}
                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center'}}>
                     <input type="text" placeholder="🔍 Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} style={searchStyle} />
-                    <h2>{verHistorialGlobal ? 'Historial de Ordenes' : 'Ordenes Abiertas'}</h2>
+                    <h2>{verHistorialGlobal ? 'Historial de Ordenes Cerradas' : 'Ordenes Abiertas'}</h2>
                     <div style={{display: 'flex', gap: '10px'}}>
                         <button onClick={() => { setVerHistorialGlobal(false); setPaginaActual(1); }} style={{...btnSmall, background: !verHistorialGlobal ? '#2c3e50' : '#bdc3c7'}}>Activas</button>
                         <button onClick={() => { setVerHistorialGlobal(true); setPaginaActual(1); }} style={{...btnSmall, background: verHistorialGlobal ? '#2c3e50' : '#bdc3c7'}}>Historial</button>

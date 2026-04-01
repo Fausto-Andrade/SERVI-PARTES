@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // Importamos useState para el efecto hover
+import React, { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import logo from '../assets/logo.jpeg';

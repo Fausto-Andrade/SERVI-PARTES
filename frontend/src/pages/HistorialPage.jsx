@@ -119,11 +119,8 @@ const HistorialPage = () => {
                     <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>SERVICIOS EN LISTA</div>
                     <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>{ordenesFiltradas.length} Registros</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>VALOR TOTAL ACUMULADO</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#2ecc71' }}>
-                        ${inversionTotalVisible.toLocaleString()}
-                    </div>
+                <div style={{ textAlign: 'right', fontSize: '2.6rem', paddingTop: '15px' }}>
+                    📜
                 </div>
             </div>
 

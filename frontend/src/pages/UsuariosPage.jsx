@@ -4,7 +4,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const UsuariosPage = () => {
-    // 1. ESTADOS - Campos vacíos por defecto como en LoginPage
+    // 1. ESTADOS
     const [usuarios, setUsuarios] = useState([]);
     const [formData, setFormData] = useState({ 
         username: '', 
@@ -18,27 +18,31 @@ const UsuariosPage = () => {
     const navigate = useNavigate();
     const registrosPorPagina = 3;
     const API_URL = 'http://localhost:3000/api/usuarios';
-
     const isFormValid = formData.username.trim() !== '' && formData.password.trim() !== '';
 
-    // 2. CARGA DE DATOS
+    // 2. CARGA DE DATOS (Filtrando solo los activos)
     const cargarUsuarios = useCallback(async () => {
-        try {
-            const res = await axios.get(API_URL);
-            if (res.data && Array.isArray(res.data)) {
-                const datosNormalizados = res.data.map(u => ({
+    try {
+        const res = await axios.get(API_URL);
+        if (res.data && Array.isArray(res.data)) {
+            const datosNormalizados = res.data
+                // ESTA LÍNEA ES LA CLAVE: 
+                // Filtra para dejar solo los que NO tengan activo en false o 0
+                .filter(u => u.activo !== false && u.activo !== 0 && u.activo !== 'false') 
+                .map(u => ({
                     id_usuario: u.id_usuario || u.ID_USUARIO,
                     username: u.username || u.USERNAME,
                     rol: u.rol || u.ROL || 'empleado',
-                    ordenes_activas: Number(u.ordenes_activas || 0) 
+                    ordenes_activas: Number(u.ordenes_activas || 0),
+                    activo: u.activo
                 }));
-                setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
-                
-            }
-        } catch (error) {
-            console.error("Error al cargar usuarios:", error);
+            
+            setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
         }
-    }, [API_URL]);
+    } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+    }
+}, [API_URL]);
 
     useEffect(() => { 
         cargarUsuarios(); 
@@ -79,10 +83,8 @@ const UsuariosPage = () => {
                 showConfirmButton: false 
             });
 
-            // RESETEO DE CAMPOS: Forzamos el estado a vacío tras el registro
             setFormData({ username: '', password: '', rol: 'empleado' });
             setShowPassword(false);
-            
             cargarUsuarios();
         } catch (error) {
             Swal.fire({ 
@@ -119,33 +121,25 @@ const UsuariosPage = () => {
         }
     };
 
-    const handleEliminar = async (id, username) => {
-        const usuario = usuarios.find(u => u.id_usuario === id);
-        
-        if (usuario && usuario.ordenes_activas > 0) {
-            return Swal.fire({
-                title: 'Acción Bloqueada',
-                text: `No se puede eliminar a ${username} porque tiene ${usuario.ordenes_activas} órdenes activas.`,
-                icon: 'error'
-            });
-        }
-
+    // NUEVA LÓGICA: RETIRAR (BORRADO LÓGICO)
+    const handleRetirar = async (id, username) => {
         const resultado = await Swal.fire({
-            title: `¿Eliminar a ${username}?`,
-            text: "El usuario perderá el acceso permanentemente.",
+            title: `¿Retirar a ${username}?`,
+            text: "El usuario ya no aparecerá en las listas, pero sus registros históricos se mantendrán.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#e53e3e',
-            confirmButtonText: 'Sí, eliminar'
+            confirmButtonColor: '#ed8936',
+            confirmButtonText: 'Sí, retirar'
         });
 
         if (resultado.isConfirmed) {
             try {
-                await axios.delete(`${API_URL}/${id}`);
-                Swal.fire('Eliminado', 'Usuario removido.', 'success');
+                // Cambiamos el DELETE por un PUT/PATCH a una ruta de desactivación
+                await axios.put(`${API_URL}/desactivar/${id}`);
+                Swal.fire('Retirado', 'El usuario ha sido quitado de la vista.', 'success');
                 cargarUsuarios();
             } catch (error) {
-                Swal.fire('Error', 'No se pudo eliminar', 'error');
+                Swal.fire('Error', 'No se pudo retirar al usuario', 'error');
             }
         }
     };
@@ -180,7 +174,6 @@ const UsuariosPage = () => {
                 <div style={{ background: '#fff', padding: '30px', borderRadius: '15px', border: '1px solid #e2e8f0', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', height: 'fit-content' }}>
                     <h4 style={{ marginTop: 0, color: '#667eea', marginBottom: '20px', borderBottom: '2px solid #f7fafc', paddingBottom: '10px' }}>Crear Nuevo Perfil</h4>
                     
-                    {/* Usamos autoComplete="off" y inputs controlados para forzar campos vacíos */}
                     <form onSubmit={handleSubmit} autoComplete="off">
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ display: 'block', fontWeight: 'bold', color: '#4a5568', marginBottom: '5px' }}>Usuario</label>
@@ -269,14 +262,13 @@ const UsuariosPage = () => {
                                                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                                                     <button onClick={(e) => handleResetPassword(e, u.id_usuario, u.username)} title="Cambiar contraseña" style={btnActionStyle}>🔑</button>
                                                     <button 
-                                                        onClick={() => handleEliminar(u.id_usuario, u.username)}
-                                                        disabled={tieneOrdenes}
+                                                        onClick={() => handleRetirar(u.id_usuario, u.username)}
+                                                        title="Retirar de la lista"
                                                         style={{ 
-                                                            ...btnDeleteStyle,
-                                                            opacity: tieneOrdenes ? 0.3 : 1,
-                                                            cursor: tieneOrdenes ? 'not-allowed' : 'pointer'
+                                                            ...btnRetirarStyle,
+                                                            cursor: 'pointer'
                                                         }}
-                                                    >🗑️</button>
+                                                    >👤❌</button>
                                                 </div>
                                             </td> 
                                         </tr>
@@ -305,7 +297,7 @@ const searchStyle = { width: '100%', padding: '15px', borderRadius: '12px', bord
 const thStyle = { padding: '15px', textAlign: 'center', color: '#718096' };
 const roleBadgeStyle = { fontSize: '0.75rem', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' };
 const btnActionStyle = { background: '#edf2f7', border: '1px solid #cbd5e0', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#4a5568' };
-const btnDeleteStyle = { background: '#fff5f5', border: '1px solid #feb2b2', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#e53e3e' };
+const btnRetirarStyle = { background: '#fffaf3', border: '1px solid #fbd38d', borderRadius: '8px', padding: '6px 10px', color: '#dd6b20' };
 const countBadgeStyle = { background: '#fff3e0', color: '#ef6c00', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid #ffe0b2' };
 const paginationContainer = { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '20px', padding: '10px' };
 const btnNav = { padding: '8px 15px', backgroundColor: '#3261c0', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' };

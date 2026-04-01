@@ -73,7 +73,7 @@ const ClientesPage = () => {
         try {
             // VALIDACIÓN DE DUPLICADOS (Nombre y Teléfono)
             const esDuplicado = clientes.some(c => 
-                c.nombre.toLowerCase().trim() === formData.nombre.toLowerCase().trim() && 
+                c.nombre.toLowerCase().trim() === formData.nombre.toLowerCase().trim() || 
                 String(c.contacto).trim() === String(formData.contacto).trim() &&
                 c.id !== formData.id // Evita que se autodetecte al editar el mismo
             );
@@ -82,7 +82,7 @@ const ClientesPage = () => {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Cliente Duplicado',
-                    text: 'Ya existe un cliente registrado con ese mismo nombre y teléfono.',
+                    text: 'Ya existe un cliente registrado con ese mismo nombre.',
                     confirmButtonColor: '#3261c0'
                 });
                 return; // Detiene la ejecución

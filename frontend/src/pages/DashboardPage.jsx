@@ -20,7 +20,7 @@ const DashboardPage = () => {
 
     // --- ESTADOS PARA PAGINACIÓN ---
     const [paginaActual, setPaginaActual] = useState(1);
-    const registrosPorPagina = 10;
+    const registrosPorPagina = 5;
 
     const [stats, setStats] = useState({
         totalManoObra: 0,

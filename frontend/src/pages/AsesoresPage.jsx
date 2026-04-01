@@ -43,7 +43,6 @@ const AsesoresPage = () => {
 
         // Escuchamos si se creó un usuario en la otra página
         const manejarNuevoUsuario = () => {
-            console.log("Sincronizando: Nuevo usuario detectado");
             cargarDatos();
         };
 
@@ -101,6 +100,7 @@ const AsesoresPage = () => {
     };
 
     const handleEliminar = async (id, nombreAsesor) => {
+        
         const resultado = await Swal.fire({
             title: `¿Eliminar a ${nombreAsesor}?`,
             text: "Esta acción no se puede deshacer y el asesor desaparecerá del sistema",

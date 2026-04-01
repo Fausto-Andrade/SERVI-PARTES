@@ -35,10 +35,22 @@ app.get('/', (req, res) => {
   res.send('Servidor del Taller Técnico funcionando');
 });
 
-// IMPORTANTE: Tu servidor corre en el 3000 por defecto según este código
+
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// });
+
+
+//Para desarrollar las pruebas unitarias:
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+
+// Solo arranca el servidor si NO estamos en modo de prueba
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    });
+}
+
 
 module.exports = app;

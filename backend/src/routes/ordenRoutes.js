@@ -9,7 +9,7 @@ router.get('/', ordenController.listarOrdenes);
 // 2. Crear una nueva orden 
 router.post('/', ordenController.crearOrden);
 
-// 3. Actualizar una orden completa (Edición)
+// 3. Actualizar una orden completa
 // Esta ruta recibe todos los campos desde el formulario de edición
 router.put('/:id', async (req, res) => {
     try {
@@ -22,6 +22,14 @@ router.put('/:id', async (req, res) => {
             mano_obra, total, requiere_factura, factura_emitida,
             estado_pago, abono_inicial, estado
         } = req.body;
+
+        // --- NUEVA VALIDACIÓN DE SEGURIDAD ---
+        if (parseFloat(abono_inicial) > parseFloat(total)) {
+            return res.status(400).json({ 
+                error: `El abono inicial (${abono_inicial}) excede el total (${total})` 
+            });
+        }
+        // -------------------------------------
 
         const query = `
             UPDATE ordenes_servicio 
