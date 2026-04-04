@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-// 1. LISTAR ÓRDENES (Con joins para nombres de cliente y técnico)
+// 1. LISTAR ÓRDENES
 const listarOrdenes = async (req, res) => {
     try {
         const query = `
@@ -22,107 +22,96 @@ const listarOrdenes = async (req, res) => {
     }
 };
 
-// 2. CREAR ORDEN (Corregido para coincidir con la columna id_usuario)
+// 2. CREAR ORDEN
 const crearOrden = async (req, res) => {
     const { 
-        id_usuario,       // Viene del frontend
-        cliente_id, 
-        tecnico_id, 
-        recibido_por, 
-        tipo_articulo, 
-        placa, 
-        tipo_especifico, 
-        categoria_servicio, 
-        mano_obra,
-        codigo_equipo, 
-        estado, 
-        total 
+        id_usuario, cliente_id, tecnico_id, recibido_por, tipo_articulo, 
+        placa, tipo_especifico, categoria_servicio, mano_obra,
+        codigo_equipo, estado, total, tipo_orden 
     } = req.body;
 
-    // Validación de seguridad
-    if (!id_usuario) {
-        return res.status(400).json({ error: "El ID del usuario creador es obligatorio" });
-    }
+    if (!id_usuario) return res.status(400).json({ error: "El ID del usuario es obligatorio" });
 
     try {
         const query = `
             INSERT INTO ordenes_servicio (
-                id_usuario,         -- CAMBIADO: Antes decía usuario_id, ahora coincide con la DB
-                cliente_id, 
-                tecnico_id, 
-                recibido_por, 
-                tipo_articulo, 
-                placa, 
-                tipo_especifico, 
-                categoria_servicio, 
-                mano_obra, 
-                codigo_equipo, 
-                estado, 
-                total
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+                id_usuario, cliente_id, tecnico_id, recibido_por, tipo_articulo, 
+                placa, tipo_especifico, categoria_servicio, mano_obra, 
+                codigo_equipo, estado, total, tipo_orden
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
             RETURNING *`;
 
         const values = [
-            id_usuario,         // $1
-            cliente_id || null, // $2
-            tecnico_id || null, // $3
-            recibido_por,       // $4
-            tipo_articulo,      // $5
-            placa,              // $6
-            tipo_especifico,    // $7
-            categoria_servicio, // $8
-            mano_obra || 0,     // $9
-            codigo_equipo,      // $10
-            estado || 'Recibido', // $11
-            total || 0          // $12
+            id_usuario, cliente_id || null, tecnico_id || null, recibido_por, tipo_articulo,
+            placa, tipo_especifico, categoria_servicio, mano_obra || 0,
+            codigo_equipo, estado || 'Recibido', total || 0, tipo_orden || 'nueva'
         ];
 
         const result = await pool.query(query, values);
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error("Error al crear orden:", error.message);
-        res.status(500).json({ error: "Error al guardar la orden en la base de datos" });
+        console.error("Error al crear:", error.message);
+        res.status(500).json({ error: "Error al guardar en la DB" });
     }
 };
 
-// 3. HISTORIAL POR PLACA
+// 3. ACTUALIZAR ORDEN (¡ESTO TE FALTABA PARA QUE EL TÉCNICO CAMBIE!)
+const actualizarOrden = async (req, res) => {
+    const { id } = req.params;
+    const { 
+        tecnico_id, recibido_por, placa, tipo_especifico, 
+        categoria_servicio, mano_obra, total, estado, tipo_orden 
+    } = req.body;
+
+    try {
+        const query = `
+            UPDATE ordenes_servicio 
+            SET tecnico_id = $1, recibido_por = $2, placa = $3, tipo_especifico = $4, 
+                categoria_servicio = $5, mano_obra = $6, total = $7, estado = $8, tipo_orden = $9
+            WHERE id_orden_servicio = $10
+            RETURNING *`;
+
+        const values = [
+            tecnico_id || null, recibido_por, placa, tipo_especifico,
+            categoria_servicio, mano_obra, total, estado, tipo_orden, id
+        ];
+
+        const result = await pool.query(query, values);
+        if (result.rowCount === 0) return res.status(404).json({ error: "Orden no encontrada" });
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Error al actualizar:", error.message);
+        res.status(500).json({ error: "Error al actualizar la orden" });
+    }
+};
+
+// 4. HISTORIAL POR PLACA Y CÓDIGO (Simplificados)
 const getHistorialPorPlaca = async (req, res) => {
     const { placa } = req.params;
     try {
-        const result = await pool.query(
-            'SELECT * FROM ordenes_servicio WHERE placa = $1 ORDER BY id_orden_servicio DESC',
-            [placa]
-        );
+        const result = await pool.query('SELECT * FROM ordenes_servicio WHERE placa = $1 ORDER BY id_orden_servicio DESC', [placa]);
         res.json(result.rows);
-    } catch (error) {
-        console.error("Error al obtener historial:", error.message);
-        res.status(500).json({ error: "Error al obtener historial" });
-    }
+    } catch (error) { res.status(500).json({ error: "Error en historial" }); }
 };
 
-// 4. HISTORIAL POR CÓDIGO (Con detalles de cliente/técnico)
 const getHistorialPorCodigo = async (req, res) => {
     const { codigo } = req.params;
     try {
         const query = `
-            SELECT o.*, t.nombre as nombre_tecnico, c.nombre as nombre_cliente, c.contacto
+            SELECT o.*, t.nombre as nombre_tecnico, c.nombre as nombre_cliente 
             FROM ordenes_servicio o
             LEFT JOIN tecnicos t ON o.tecnico_id = t.id_tecnicos
             LEFT JOIN clientes c ON o.cliente_id = c.id
-            WHERE o.codigo_equipo = $1
-            ORDER BY o.fecha_ingreso DESC
-        `;
+            WHERE o.codigo_equipo = $1 ORDER BY o.fecha_ingreso DESC`;
         const result = await pool.query(query, [codigo]);
         res.json(result.rows);
-    } catch (error) {
-        console.error("Error al obtener historial por código:", error.message);
-        res.status(500).json({ error: "Error al obtener historial" });
-    }
+    } catch (error) { res.status(500).json({ error: "Error en historial" }); }
 };
 
 module.exports = {
     listarOrdenes,
     crearOrden,
+    actualizarOrden, // <-- Exportado
     getHistorialPorPlaca,
     getHistorialPorCodigo
 };

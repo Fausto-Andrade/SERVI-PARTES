@@ -13,8 +13,8 @@ const Tecnico = {
   },
 
  // Obtener todos los técnicos con su carga de órdenes activa
-  getAll: async () => {
-    // Agregamos t.activo a la selección para que el Front-end sepa el estado
+ getAll: async () => {
+    // ACTUALIZADO: Primero los activos, luego orden alfabético por nombre
     const queryConOrdenes = `
       SELECT t.*, 
       (SELECT COUNT(*)::int 
@@ -22,7 +22,7 @@ const Tecnico = {
        WHERE o.tecnico_id = t.id_tecnicos 
        AND o.estado NOT IN ('Entregado', 'Terminado', 'Cancelado')) AS ordenes_activas
       FROM tecnicos t
-      ORDER BY t.activo DESC, t.id_tecnicos DESC; -- Prioriza mostrar los activos arriba
+      ORDER BY t.activo DESC, t.nombre COLLATE "es_ES" ASC; 
     `;
 
     try {

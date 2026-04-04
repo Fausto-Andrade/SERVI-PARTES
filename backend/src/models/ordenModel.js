@@ -2,20 +2,43 @@ const db = require('../config/db');
 
 const Orden = {
   create: async (datos) => {
-    const { cliente_id, recibido_por, tipo_articulo, placa, categoria_servicio, tipo_especifico, mano_obra } = datos;
+    
+    const { 
+      cliente_id, 
+      recibido_por, 
+      tipo_articulo, 
+      placa, 
+      categoria_servicio, 
+      tipo_especifico, 
+      mano_obra,
+      tipo_orden 
+    } = datos;
+
     const query = `
       INSERT INTO ordenes_servicio 
-      (cliente_id, recibido_por, tipo_articulo, placa, categoria_servicio, tipo_especifico, mano_obra) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      (cliente_id, recibido_por, tipo_articulo, placa, categoria_servicio, tipo_especifico, mano_obra, tipo_orden) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *;
     `;
-    const values = [cliente_id, recibido_por, tipo_articulo, placa, categoria_servicio, tipo_especifico, mano_obra];
+
+    const values = [
+      cliente_id, 
+      recibido_por, 
+      tipo_articulo, 
+      placa, 
+      categoria_servicio, 
+      tipo_especifico, 
+      mano_obra,
+      tipo_orden || 'nueva'
+    ];
+
     const { rows } = await db.query(query, values);
     return rows[0];
   },
 
   getAll: async () => {
-    // Aquí traemos el nombre del cliente uniendo las tablas
+    // Mantenemos la lógica de unión para traer el nombre del cliente
+    // o.* traerá automáticamente el nuevo campo tipo_orden de la tabla
     const query = `
       SELECT o.*, c.nombre as nombre_cliente 
       FROM ordenes_servicio o
@@ -35,8 +58,7 @@ const Orden = {
     `;
     const { rows } = await db.query(query, [nuevoEstado, id_orden]);
     return rows[0];
-},
-
+  },
 };
 
 module.exports = Orden;

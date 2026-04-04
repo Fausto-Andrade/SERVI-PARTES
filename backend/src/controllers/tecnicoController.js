@@ -3,16 +3,20 @@ const Tecnico = require('../models/tecnicoModel');
 const tecnicoController = {
     listarTecnicos: async (req, res) => {
         try {
-            // getAll() debería traer a todos, pero podrías filtrar en el model 
-            // o recibir un query param si quieres solo los activos
-            const tecnicos = await Tecnico.getAll();
-            res.json(tecnicos);
+        const tecnicos = await Tecnico.getAll();
+        
+        // Refuerzo de ordenamiento en el controlador
+        const tecnicosOrdenados = tecnicos.sort((a, b) => 
+            a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
+        );
+
+        res.json(tecnicosOrdenados);
         } catch (error) {
-            console.error("Error al obtener técnicos:", error.message);
-            res.status(500).json({ mensaje: 'Error al obtener los técnicos' });
+        console.error('Error al listar técnicos:', error);
+        res.status(500).json({ mensaje: 'Error al obtener los técnicos' });
         }
     },
-
+    
     crearTecnico: async (req, res) => {
         try {
             const { nombre, especialidad } = req.body;
