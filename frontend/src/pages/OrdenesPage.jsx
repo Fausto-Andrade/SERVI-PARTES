@@ -5,13 +5,30 @@ import { getTecnicos } from '../services/tecnicoService';
 import { getPersonalRecepcion } from '../services/recepcionService';
 import usuarioService from '../services/usuarioService'; 
 import Swal from 'sweetalert2';
+import logo from '../assets/logo.jpeg'; // Ajusta la cantidad de ../ según tu estructura
 
 const SERVICIOS_DISPONIBLES = [
-    "Vehiculo", "Alternador", "Arranque", "Moto ventilador", "Motor plumillas", 
-    "Sistema eléctrico", "Arranque moto", "Motor", "Aspiradora", 
-    "Taladro", "Pulidora", "Bobina aire", "Bobinada rotor", 
-    "Bobinada inducido", "Bobinada corona", "Bobinada campos bobina", 
-    "Cambio de colector"
+    "Alternador",
+    "Arranque",
+    "Arranque moto",
+    "Aspiradora",
+    "Blower",
+    "Bobina aire",
+    "Bobinada campos bobina",
+    "Bobinada corona",
+    "Bobinada inducido",
+    "Bobinada rotor",
+    "Cambio de colector",
+    "Moto ventilador",
+    "Motor",
+    "Motor carpado",
+    "Motor elevavidrios",
+    "Motor plumillas",
+    "Motor puerta",
+    "Pulidora",
+    "Sistema eléctrico",
+    "Taladro",
+    "Vehiculo"
 ];
 
 const OrdenesPage = () => {
@@ -366,6 +383,99 @@ const OrdenesPage = () => {
         return coincideBusqueda && (verHistorialGlobal ? esCerrada : !esCerrada);
     });
 
+    const handlePrint = (orden) => {
+    // Creamos una ventana nueva para el ticket de impresión
+        const printWindow = window.open('', '_blank');
+    
+        // Aquí defines el diseño de tu ticket (HTML + CSS básico)
+        printWindow.document.write(`
+            <html>
+                <head>                    
+                    <style>                    
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; color: #333; }
+                        .ticket { max-width: 400px; margin: 0 auto; border: 1px solid #eee; padding: 15px; }
+                        .header { text-align: center; margin-bottom: 20px; }
+                        .header-content {
+                            display: flex;
+                            justify-content: space-between; /* Logo a la izquierda, texto a la derecha */
+                            align-items: center;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 15px;
+                            margin-bottom: 20px;
+                        }
+                        .logo { max-width: 100px; height: auto; margin-bottom: 10px; }
+                        .info-container {
+                            text-align: right;
+                        }
+                        .empresa-nombre { font-size: 1.4rem; font-weight: bold; margin: 0; color: #000; }
+                        .info-taller { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+                        
+                        .titulo-orden { background: #f4f4f4; text-align: center; padding: 5px; font-weight: bold; margin-bottom: 15px; border: 1px solid #ddd; }
+                        
+                        .fila { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px dotted #eee; padding-bottom: 2px; }
+                        .label { font-weight: bold; color: #555; }
+                        .valor { text-align: right; }
+                        
+                        .footer { margin-top: 30px; font-size: 0.75rem; text-align: center; border-top: 1px solid #000; padding-top: 10px; }
+                        .firma { margin-top: 40px; border-top: 1px solid #999; width: 150px; margin-left: auto; margin-right: auto; }
+                        
+                        @media print {
+                            body { padding: 0; }
+                            .ticket { border: none; max-width: 100%; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                <title>ARRANQUES Y ALTERNADORES LA 8va</title>
+                    <div class="ticket">
+                        <div class="header">
+                            <div class="header-content", >
+                                <div class="logo-container">
+                                    <img src="${logo}" alt="Logo" class="logo" onerror="this.style.display='none'">
+                                </div>
+                                <div class="info-container">
+                                    <div class="info-taller">
+                                        <strong>Nit:</strong> 123.456.789-0 <br>
+                                        <strong>📍</strong> Tu Dirección Aquí, Ciudad <br>
+                                        <strong>📞</strong> Tel: 300 000 0000
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.id_orden_servicio}</div>
+
+                        <div class="fila"><span class="label">Fecha:</span> <span class="valor">${new Date(orden.fecha_ingreso).toLocaleDateString()}</span></div>
+                        <div class="fila"><span class="label">Cliente:</span> <span class="valor">${orden.nombre_cliente || 'General'}</span></div>
+                        <div class="fila"><span class="label">Contacto:</span> <span class="valor">${orden.contacto || '-'}</span></div>
+                        <div class="fila"><span class="label">Recibido por:</span> <span class="valor">${orden.recibido_por || '-'}</span></div>
+                        
+                        <div style="margin: 15px 0; font-weight: bold; font-size: 0.9rem; ">DATOS DEL EQUIPO:</div>
+                        
+                        <div class="fila"><span class="label">Equipo:</span> <span class="valor">${orden.tipo_especifico}</span></div>
+                        <div class="fila"><span class="label">Placa/Código:</span> <span class="valor">${orden.placa || orden.codigo_equipo}</span></div>
+                        <div class="fila"><span class="label">Servicio:</span> <span class="valor">${orden.categoria_servicio}</span></div>
+                        <div class="fila"><span class="label">Mano de obra:</span> <span class="valor">${orden.mano_obra}</span></div>
+                        <div class="fila"><span class="label">Total:</span> <span class="valor">${orden.total}</span></div>
+                        <div class="fila"><span class="label">Estado:</span> <span class="valor"><strong>${orden.estado}</strong></span></div>
+
+                        <div class="footer">
+                            <p>Favor presentar este documento para retirar su equipo.</p>
+                            <p><em>Gracias por confiar en nosotros.</em></p>
+                            <div class="firma">Recibido Conforme</div>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `);
+        
+            printWindow.document.close();
+            printWindow.onload = () => {
+            printWindow.print(); // Abre el diálogo de impresión del sistema
+            printWindow.close(); // Cerrar despues de imprimir
+        };
+    };
     const registrosPaginados = ordenesFiltradas.slice((paginaActual - 1) * registrosPorPagina, paginaActual * registrosPorPagina);
     const totalPaginas = Math.ceil(ordenesFiltradas.length / registrosPorPagina);
 
@@ -452,7 +562,8 @@ const OrdenesPage = () => {
                             <label style={labelStyle}>TIPO DE INGRESO</label>
                             <select 
                                 ref={selectTipoOrdenRef}
-                                name="tipo_orden" value={formData.tipo_orden} 
+                                name="tipo_orden" 
+                                value={formData.tipo_orden} 
                                 onChange={handleChange} 
                                 style={inputStyle} 
                                 disabled={editando}
@@ -478,9 +589,22 @@ const OrdenesPage = () => {
 
                         <div>
                             <label style={labelStyle}>Cliente</label>
-                            <select name="cliente_id" value={formData.cliente_id} onChange={handleChange} required style={inputStyle} disabled={editando}>
-                                <option value="">Seleccionar...</option>
-                                {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                            <select 
+                                name="cliente_id" 
+                                value={formData.cliente_id} 
+                                onChange={handleChange} 
+                                style={inputStyle}
+                            >
+                                <option value="">Seleccione un cliente</option>
+                                {clientes
+                                    .slice() // Copia para seguridad
+                                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+                                    .map(c => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}
+                                        </option>
+                                    ))
+                                }
                             </select>
                         </div>
                     </div>
@@ -488,14 +612,25 @@ const OrdenesPage = () => {
                     <div style={{...grid3Col, marginTop: '15px'}}>
                         <div>
                             <label style={labelStyle}>Tipo de Equipo</label>
-                            <select name="tipo_especifico" value={formData.tipo_especifico} onChange={handleChange} required style={inputStyle} disabled={editando}>
+                            <select 
+                                name="tipo_especifico" 
+                                value={formData.tipo_especifico} 
+                                onChange={handleChange} 
+                                required 
+                                style={inputStyle} 
+                                disabled={editando}
+                            >
                                 <option value="">Seleccionar...</option>
-                                {SERVICIOS_DISPONIBLES.map(s => <option key={s} value={s}>{s}</option>)}
+                                {SERVICIOS_DISPONIBLES.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div>
                             <label style={labelStyle}>Técnico Asignado</label>
-                            <select name="tecnico_id" value={formData.tecnico_id} onChange={handleChange} required style={inputStyle} disabled={editando}>
+                            <select name="tecnico_id" value={formData.tecnico_id} onChange={handleChange} required style={inputStyle}>
                                 <option value="">Técnico...</option>
                                 {tecnicos.map(t => (
                                     <option key={t.id_usuario || t.id_tecnicos} value={t.id_usuario || t.id_tecnicos}>
@@ -728,6 +863,22 @@ const OrdenesPage = () => {
                                         {o.estado !== 'Entregado' && (
                                             <button onClick={() => seleccionarOrden(o)} style={actionBtn} title="Editar Orden">✏️</button>
                                         )}
+
+                                        {/* NUEVO: Botón de Impresora 🖨️ */}
+                                        <button 
+                                            onClick={() => handlePrint(o)} 
+                                            style={{ 
+                                                background: 'none', 
+                                                border: 'none', 
+                                                cursor: 'pointer', 
+                                                fontSize: '18px',
+                                                color: '#007bff' // Un color azul para diferenciarlo
+                                            }}
+                                            title="Imprimir Orden"
+                                        >
+                                            🖨️
+                                        </button>
+
                                         {o.estado === 'Entregado' && (
                                             <button onClick={() => abrirHistorial(o.codigo_equipo)} style={actionBtn} title="Ver Historial">📜</button>
                                         )}

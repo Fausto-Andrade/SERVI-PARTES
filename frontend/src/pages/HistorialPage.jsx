@@ -22,7 +22,6 @@ const HistorialPage = () => {
                 const data = await getOrdenes();
                 
                 // Solo mostramos en el historial las que tengan estado "Entregado"
-                // Las demás se consideran abiertas y no pertenecen a esta vista.
                 const soloEntregadas = data.filter(o => o.estado === 'Entregado');
                 
                 const ordenadas = soloEntregadas.sort((a, b) => b.id_orden_servicio - a.id_orden_servicio);
@@ -75,8 +74,6 @@ const HistorialPage = () => {
     const primerIndice = ultimoIndice - registrosPorPagina;
     const registrosPaginados = ordenesFiltradas.slice(primerIndice, ultimoIndice);
     const totalPaginas = Math.ceil(ordenesFiltradas.length / registrosPorPagina);
-
-    const inversionTotalVisible = ordenesFiltradas.reduce((acc, o) => acc + calcularTotalFila(o), 0);
 
     return (
         <div style={{ padding: '20px', maxWidth: '1350px', margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
@@ -133,7 +130,7 @@ const HistorialPage = () => {
                             <thead>
                                 <tr style={{ background: '#f4f7f6', color: '#2c3e50', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>
                                     <th style={{ padding: '15px' }}>Fecha</th>
-                                    <th>Código</th>
+                                    <th>Código / Tipo Ingreso</th>
                                     <th>Cliente / Cel</th>
                                     <th>Equipo / Placa</th>
                                     <th>Procedimiento</th>
@@ -149,8 +146,21 @@ const HistorialPage = () => {
                                         <td style={{ padding: '15px', fontSize: '0.85rem' }}>
                                             {new Date(o.fecha_creacion || o.fecha_ingreso).toLocaleDateString()}
                                         </td>
-                                        <td style={{ fontWeight: 'bold', color: '#7f8c8d', fontSize: '0.85rem' }}>
-                                            {o.codigo_equipo}
+                                        <td style={{ fontSize: '0.85rem' }}>
+                                            <div style={{ fontWeight: 'bold', color: '#7f8c8d', marginBottom: '4px' }}>{o.codigo_equipo}</div>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold',
+                                                backgroundColor: 
+                                                    o.tipo_orden === 'garantia' ? '#e74c3c' : 
+                                                    o.tipo_orden === 'reingreso' ? '#4878da' : '#27ae60',
+                                                color: 'white',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                {o.tipo_orden || 'Nueva'}
+                                            </span>
                                         </td>
                                         <td style={{ padding: '10px 5px' }}>
                                             <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{o.nombre_cliente}</div>
@@ -196,6 +206,7 @@ const HistorialPage = () => {
                         </table>
                     </div>
 
+                    {/* PAGINACIÓN */}
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '20px' }}>
                         <button 
                             onClick={() => setPaginaActual(p => Math.max(p - 1, 1))}
