@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/recepcion'; // Ajusta a tu ruta de backend
+// const API_URL = 'http://localhost:3000/api/recepcion';
+const API_URL = 'http://138.36.237.111:3000/api/recepcion';
 
 export const getPersonalRecepcion = async () => {
     try {
@@ -21,7 +22,8 @@ export const createAsesor = async (datos) => {
 // Agrega esto al final de tu recepcionService.js
 export const deleteAsesor = async (id) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/recepcion/${id}`, { // Ajusta tu URL
+        // const response = await fetch(`http://localhost:3000/api/recepcion/${id}`, {
+        const response = await fetch(`http://138.36.237.111:3000/api/recepcion/${id}`, {
             method: 'DELETE',
         });
         if (!response.ok) throw new Error('Error al eliminar');

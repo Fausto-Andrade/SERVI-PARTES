@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Asegúrate de que este puerto sea el que usa tu backend de Express
-const API_URL = 'http://localhost:3000/api/users'; 
+// const API_URL = 'http://localhost:3000/api/users'; 
+const API_URL = 'http://138.36.237.111:3000/api/users'; 
 
 const usuarioService = {
     // Coincide con router.get('/') -> userController.listar
@@ -26,7 +26,6 @@ const usuarioService = {
         }
     },
 
-    // Coincide con router.put('/reset-password/:id') -> userController.actualizarPassword
     actualizarPassword: async (id, password) => {
         try {
             const response = await axios.put(`${API_URL}/reset-password/${id}`, { password });

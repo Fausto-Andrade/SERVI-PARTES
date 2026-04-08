@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/ordenes';
+// const API_URL = 'http://localhost:3000/api/ordenes';
+const API_URL = 'http://138.36.237.111:3000/api/ordenes';
 
 // 1. Obtener todas las órdenes
 export const getOrdenes = async () => {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/clientes'; // Ajusta la URL si es necesario
+// const API_URL = 'http://localhost:3000/api/clientes';
+const API_URL = 'http://138.36.237.111:3000/api/clientes';
 
 export const getClientes = async () => {
     const res = await axios.get(API_URL);
@@ -14,7 +15,8 @@ export const createCliente = async (cliente) => {
 
 export const updateCliente = async (id, clienteData) => {
     // Asegúrate de usar backticks (``) para la plantilla de cadena
-    const response = await fetch(`http://localhost:3000/api/clientes/${id}`, {
+    // const response = await fetch(`http://localhost:3000/api/clientes/${id}`, {
+    const response = await fetch(`http://138.36.237.111:3000/api/clientes/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',

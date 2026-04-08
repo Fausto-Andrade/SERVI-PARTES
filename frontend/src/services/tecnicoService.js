@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/tecnicos';
+// const API_URL = 'http://localhost:3000/api/tecnicos';
+const API_URL = 'http://138.36.237.111:3000/api/tecnicos';
 
 export const getTecnicos = async () => {
   const response = await axios.get(API_URL);
