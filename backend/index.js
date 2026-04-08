@@ -1,19 +1,17 @@
 const app = require('./src/app');
 const express = require('express');
 const cors = require('cors');
-const userRoutes = require('./src/routes/userRoutes'); // Asegúrate de que la ruta sea correcta
+const userRoutes = require('./src/routes/userRoutes'); 
 
 const port = process.env.PORT || 3000;
 
 // --- Middlewares Globales ---
-// Permite peticiones desde otros dominios (como tu frontend de React)
+// En producción, es mejor ser específicos, pero para solucionar el error actual, 
+// cors() abierto está bien.
 app.use(cors()); 
-
-// Permite que el servidor entienda archivos JSON en el cuerpo de las peticiones
 app.use(express.json()); 
 
 // --- Definición de Rutas ---
-// Montamos las rutas de usuario bajo el prefijo /api/users
 app.use('/api/users', userRoutes);
 
 // --- Manejo de Errores Básico ---
@@ -22,7 +20,11 @@ app.use((err, req, res, next) => {
   res.status(500).send({ mensaje: 'Algo salió mal en el servidor' });
 });
 
-app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
-  console.log(`Rutas de usuarios listas en http://localhost:${port}/api/users`);
+// Cambiamos el log para que sea más informativo en la nube
+app.listen(port, '0.0.0.0', () => {
+  console.log(`--------------------------------------------------`);
+  console.log(` Servidor Backend Activo`);
+  console.log(` Puerto: ${port}`);
+  console.log(` URL Interna: http://localhost:${port}`);
+  console.log(`--------------------------------------------------`);
 });

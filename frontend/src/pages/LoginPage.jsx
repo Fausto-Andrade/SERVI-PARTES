@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios'; 
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import logoEmpresa from '../assets/logo.jpeg';
@@ -25,13 +25,15 @@ const LoginPage = ({ onLogin }) => {
         if (!esValido) return;
 
         try {
-            const res = await axios.post('http://localhost:3000/api/auth/login', { username, password });
+            // CAMBIO: Ahora usamos 'api' y la ruta relativa. 
+            // Esto se convierte automáticamente en http://138.36.237.111/api/auth/login
+            const res = await api.post('/auth/login', { username, password });
             
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user', res.data.username);
             localStorage.setItem('rol', res.data.rol);
 
-            // Alerta de éxito con colores de marca
+            // Alerta de éxito con tus colores de marca originales
             Swal.fire({
                 icon: 'success',
                 title: '¡Bienvenido!',
@@ -40,9 +42,7 @@ const LoginPage = ({ onLogin }) => {
                 showConfirmButton: false,
                 timerProgressBar: true,
                 iconColor: '#27ae60',
-                background: '#ffffff',
-                titleColor: '#2c3e50',
-                textColor: '#7f8c8d'
+                background: '#ffffff'
             });
 
             onLogin(res.data); 
@@ -53,7 +53,7 @@ const LoginPage = ({ onLogin }) => {
             
         } catch (error) {
             console.error(error);
-            // Alerta de error
+            // Alerta de error con tus estilos originales
             Swal.fire({
                 icon: 'error',
                 title: 'Error de acceso',
@@ -61,9 +61,7 @@ const LoginPage = ({ onLogin }) => {
                 iconColor: '#e74c3c',
                 confirmButtonColor: '#ffc107', 
                 confirmButtonText: 'Reintentar',
-                background: '#ffffff',
-                titleColor: '#2c3e50',
-                textColor: '#7f8c8d'
+                background: '#ffffff'
             });
         }
     };
@@ -105,7 +103,6 @@ const LoginPage = ({ onLogin }) => {
                         required
                         autoComplete="new-password"
                     />
-                    {/* Icono del ojo */}
                     <span 
                         onClick={() => setShowPassword(!showPassword)} 
                         style={eyeIconStyle}
@@ -151,7 +148,7 @@ const LoginPage = ({ onLogin }) => {
     );
 };
 
-// --- ESTILOS ---
+// --- ESTILOS (Sin modificaciones) ---
 const cardContainer = {
     maxWidth: '400px', 
     margin: '80px auto', 

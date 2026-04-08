@@ -2,12 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db'); 
 
-/**
- * GET /api/recepcion
- * Ahora obtiene los 'username' de la tabla 'usuarios' que tengan rol 'EMPLEADO',
- * manteniendo también al personal registrado manualmente en 'personal_recepcion' 
- * si así lo deseas.
- */
 router.get('/', async (req, res) => {
   try {
     // Forzamos que ambos SELECT devuelvan una columna llamada "nombre"

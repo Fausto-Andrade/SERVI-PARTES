@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios'; 
 import Swal from 'sweetalert2';
 
 const UsuariosPage = () => {
@@ -17,32 +17,33 @@ const UsuariosPage = () => {
     
     const navigate = useNavigate();
     const registrosPorPagina = 3;
-    const API_URL = 'http://localhost:3000/api/usuarios';
+
+    // CAMBIO: Ya no necesitamos la URL completa con localhost, usamos la ruta relativa
+    const API_ENDPOINT = '/usuarios'; 
     const isFormValid = formData.username.trim() !== '' && formData.password.trim() !== '';
 
     // 2. CARGA DE DATOS (Filtrando solo los activos)
     const cargarUsuarios = useCallback(async () => {
-    try {
-        const res = await axios.get(API_URL);
-        if (res.data && Array.isArray(res.data)) {
-            const datosNormalizados = res.data
-                // ESTA LÍNEA ES LA CLAVE: 
-                // Filtra para dejar solo los que NO tengan activo en false o 0
-                .filter(u => u.activo !== false && u.activo !== 0 && u.activo !== 'false') 
-                .map(u => ({
-                    id_usuario: u.id_usuario || u.ID_USUARIO,
-                    username: u.username || u.USERNAME,
-                    rol: u.rol || u.ROL || 'empleado',
-                    ordenes_activas: Number(u.ordenes_activas || 0),
-                    activo: u.activo
-                }));
-            
-            setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
+        try {
+            // CAMBIO: Usamos 'api.get' en lugar de 'axios.get'
+            const res = await api.get(API_ENDPOINT);
+            if (res.data && Array.isArray(res.data)) {
+                const datosNormalizados = res.data
+                    .filter(u => u.activo !== false && u.activo !== 0 && u.activo !== 'false') 
+                    .map(u => ({
+                        id_usuario: u.id_usuario || u.ID_USUARIO,
+                        username: u.username || u.USERNAME,
+                        rol: u.rol || u.ROL || 'empleado',
+                        ordenes_activas: Number(u.ordenes_activas || 0),
+                        activo: u.activo
+                    }));
+                
+                setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
+            }
+        } catch (error) {
+            console.error("Error al cargar usuarios:", error);
         }
-    } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-    }
-}, [API_URL]);
+    }, [API_ENDPOINT]);
 
     useEffect(() => { 
         cargarUsuarios(); 
@@ -74,7 +75,8 @@ const UsuariosPage = () => {
         }
 
         try {
-            await axios.post(`${API_URL}/registro`, formData);
+            // CAMBIO: Usamos la instancia 'api'
+            await api.post(`${API_ENDPOINT}/registro`, formData);
             
             Swal.fire({ 
                 title: '¡Usuario Creado!', 
@@ -112,7 +114,8 @@ const UsuariosPage = () => {
 
         if (newPassword) {
             try {
-                await axios.put(`${API_URL}/reset-password/${id}`, { password: newPassword });
+                // CAMBIO: Usamos la instancia 'api'
+                await api.put(`${API_ENDPOINT}/reset-password/${id}`, { password: newPassword });
                 Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
                 cargarUsuarios(); 
             } catch (error) {
@@ -121,7 +124,6 @@ const UsuariosPage = () => {
         }
     };
 
-    // NUEVA LÓGICA: RETIRAR (BORRADO LÓGICO)
     const handleRetirar = async (id, username) => {
         const resultado = await Swal.fire({
             title: `¿Retirar a ${username}?`,
@@ -134,8 +136,8 @@ const UsuariosPage = () => {
 
         if (resultado.isConfirmed) {
             try {
-                // Cambiamos el DELETE por un PUT/PATCH a una ruta de desactivación
-                await axios.put(`${API_URL}/desactivar/${id}`);
+                // CAMBIO: Usamos la instancia 'api'
+                await api.put(`${API_ENDPOINT}/desactivar/${id}`);
                 Swal.fire('Retirado', 'El usuario ha sido quitado de la vista.', 'success');
                 cargarUsuarios();
             } catch (error) {

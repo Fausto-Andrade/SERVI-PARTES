@@ -35,11 +35,7 @@ router.get('/check-ordenes/:id', async (req, res) => {
     }
 });
 
-/**
- * 4. ELIMINACIÓN LÓGICA (BLOQUEO)
- * En lugar de DELETE físico, hacemos un UPDATE del campo 'activo'.
- * Esto evita el error de llave foránea y mantiene el historial.
- */
+
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
