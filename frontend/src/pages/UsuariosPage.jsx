@@ -39,7 +39,7 @@ const UsuariosPage = () => {
                     activo: u.activo
                 }));
             
-            setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
+            setUsuarios(datosNormalizados.sort((a, b) => (b.id_usuario || 0) - (a.id_usuario || 0)));
         } catch (error) {
             console.error("Error al cargar usuarios:", error);
             setUsuarios([]); // Reset a vacío en caso de error
@@ -62,8 +62,10 @@ const UsuariosPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const usuarioExistente = usuarios.find(
-            (u) => u.username.toLowerCase() === formData.username.trim().toLowerCase()
+        // Buscamos de forma segura dentro del estado usuarios
+        const listaUsuarios = Array.isArray(usuarios) ? usuarios : [];
+        const usuarioExistente = listaUsuarios.find(
+            (u) => u.username && u.username.toLowerCase() === formData.username.trim().toLowerCase()
         );
 
         if (usuarioExistente) {
