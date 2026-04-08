@@ -18,30 +18,31 @@ const UsuariosPage = () => {
     const navigate = useNavigate();
     const registrosPorPagina = 3;
 
-    // CAMBIO: Ya no necesitamos la URL completa con localhost, usamos la ruta relativa
     const API_ENDPOINT = '/usuarios'; 
     const isFormValid = formData.username.trim() !== '' && formData.password.trim() !== '';
 
-    // 2. CARGA DE DATOS (Filtrando solo los activos)
+    // 2. CARGA DE DATOS (Con protección contra errores de tipo)
     const cargarUsuarios = useCallback(async () => {
         try {
-            // CAMBIO: Usamos 'api.get' en lugar de 'axios.get'
             const res = await api.get(API_ENDPOINT);
-            if (res.data && Array.isArray(res.data)) {
-                const datosNormalizados = res.data
-                    .filter(u => u.activo !== false && u.activo !== 0 && u.activo !== 'false') 
-                    .map(u => ({
-                        id_usuario: u.id_usuario || u.ID_USUARIO,
-                        username: u.username || u.USERNAME,
-                        rol: u.rol || u.ROL || 'empleado',
-                        ordenes_activas: Number(u.ordenes_activas || 0),
-                        activo: u.activo
-                    }));
-                
-                setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
-            }
+            
+            // Verificamos que res.data sea un arreglo antes de procesar
+            const dataBruta = Array.isArray(res.data) ? res.data : [];
+
+            const datosNormalizados = dataBruta
+                .filter(u => u && u.activo !== false && u.activo !== 0 && u.activo !== 'false') 
+                .map(u => ({
+                    id_usuario: u.id_usuario || u.ID_USUARIO,
+                    username: u.username || u.USERNAME,
+                    rol: u.rol || u.ROL || 'empleado',
+                    ordenes_activas: Number(u.ordenes_activas || 0),
+                    activo: u.activo
+                }));
+            
+            setUsuarios(datosNormalizados.sort((a, b) => b.id_usuario - a.id_usuario));
         } catch (error) {
             console.error("Error al cargar usuarios:", error);
+            setUsuarios([]); // Reset a vacío en caso de error
         }
     }, [API_ENDPOINT]);
 
@@ -75,7 +76,6 @@ const UsuariosPage = () => {
         }
 
         try {
-            // CAMBIO: Usamos la instancia 'api'
             await api.post(`${API_ENDPOINT}/registro`, formData);
             
             Swal.fire({ 
@@ -114,7 +114,6 @@ const UsuariosPage = () => {
 
         if (newPassword) {
             try {
-                // CAMBIO: Usamos la instancia 'api'
                 await api.put(`${API_ENDPOINT}/reset-password/${id}`, { password: newPassword });
                 Swal.fire({ title: '¡Actualizado!', icon: 'success', timer: 1500, showConfirmButton: false });
                 cargarUsuarios(); 
@@ -136,7 +135,6 @@ const UsuariosPage = () => {
 
         if (resultado.isConfirmed) {
             try {
-                // CAMBIO: Usamos la instancia 'api'
                 await api.put(`${API_ENDPOINT}/desactivar/${id}`);
                 Swal.fire('Retirado', 'El usuario ha sido quitado de la vista.', 'success');
                 cargarUsuarios();
@@ -146,11 +144,13 @@ const UsuariosPage = () => {
         }
     };
 
-    // 4. FILTRADO Y PAGINACIÓN
-    const usuariosFiltrados = (usuarios || []).filter(u => 
-        (u.username || "").toLowerCase().includes(busqueda.toLowerCase()) ||
-        (u.rol || "").toLowerCase().includes(busqueda.toLowerCase())
-    );
+    // 4. FILTRADO Y PAGINACIÓN (Protegido contra tipos no-array)
+    const usuariosFiltrados = Array.isArray(usuarios) 
+        ? usuarios.filter(u => 
+            (u.username || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+            (u.rol || "").toLowerCase().includes(busqueda.toLowerCase())
+          )
+        : [];
 
     const totalPaginas = Math.ceil(usuariosFiltrados.length / registrosPorPagina);
     const ultimoIndice = paginaActual * registrosPorPagina;
