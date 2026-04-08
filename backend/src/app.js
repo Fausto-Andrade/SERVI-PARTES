@@ -6,51 +6,39 @@ require('dotenv').config();
 const clienteRoutes = require('./routes/clienteRoutes');
 const tecnicoRoutes = require('./routes/tecnicoRoutes');
 const ordenRoutes = require('./routes/ordenRoutes');
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/authRoutes'); // <--- AQUÍ ESTÁ TU LOGIN
 const userRoutes = require('./routes/userRoutes');
 const statsRoutes = require('./routes/statsRoutes');
-
-// 2. NUEVA RUTA: Importar ruta de personal de recepción
 const recepcionRoutes = require('./routes/recepcionRoutes'); 
 
 const app = express();
 
 // Middlewares
-app.use(cors()); // Permite peticiones desde el frontend (React)
-app.use(express.json()); // Permite recibir JSON en el cuerpo de las peticiones
+// Permitimos el acceso desde cualquier origen para evitar errores de CORS en producción
+app.use(cors()); 
+app.use(express.json()); 
 
 // 3. Conectar las rutas
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/tecnicos', tecnicoRoutes);
 app.use('/api/ordenes', ordenRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Login y autenticación
 app.use('/api/usuarios', userRoutes);
 app.use('/api/stats', statsRoutes);
-
-// 4. NUEVO ENDPOINT: Conectar personal de recepción
 app.use('/api/recepcion', recepcionRoutes);
 
-// Ruta de prueba inicial
+// Ruta de prueba inicial (útil para verificar si el backend responde)
 app.get('/', (req, res) => {
-  res.send('Servidor del Taller Técnico funcionando');
+  res.send('Servidor del Taller Técnico funcionando correctamente');
 });
 
-
-// const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () => {
-//   console.log(`Servidor corriendo en http://localhost:${PORT}`);
-// });
-
-
-//Para desarrollar las pruebas unitarias:
 const PORT = process.env.PORT || 3000;
 
-// Solo arranca el servidor si NO estamos en modo de prueba
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
-        console.log(`Servidor corriendo en http://localhost:${PORT}`);
+        // En el servidor, se sigue escuchando internamente en el 3000
+        console.log(`Servidor escuchando en el puerto ${PORT}`);
     });
 }
-
 
 module.exports = app;

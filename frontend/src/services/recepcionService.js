@@ -1,12 +1,13 @@
-import axios from 'axios';
+// 1. Importamos tu instancia configurada
+import api from '../api/axios';
 
-// const API_URL = 'http://localhost:3000/api/recepcion';
-const API_URL = 'http://138.36.237.111:3000/api/recepcion';
+// 2. Definimos la ruta relativa
+const API_URL = '/recepcion';
 
 export const getPersonalRecepcion = async () => {
     try {
-        // CAMBIO CRUCIAL: Quitamos '/empleados' porque el router ya está en '/'
-        const response = await axios.get(API_URL); 
+        // Usamos 'api' en lugar de 'axios'
+        const response = await api.get(API_URL); 
         return response.data; 
     } catch (error) {
         console.error("Error al obtener empleados:", error);
@@ -15,21 +16,26 @@ export const getPersonalRecepcion = async () => {
 };
 
 export const createAsesor = async (datos) => {
-    const response = await axios.post(API_URL, datos);
-    return response.data;
+    try {
+        // Usamos 'api' para mantener la base /api
+        const response = await api.post(API_URL, datos);
+        return response.data;
+    } catch (error) {
+        console.error("Error al crear asesor:", error);
+        throw error;
+    }
 };
 
-// Agrega esto al final de tu recepcionService.js
 export const deleteAsesor = async (id) => {
     try {
-        // const response = await fetch(`http://localhost:3000/api/recepcion/${id}`, {
-        const response = await fetch(`http://138.36.237.111:3000/api/recepcion/${id}`, {
-            method: 'DELETE',
-        });
-        if (!response.ok) throw new Error('Error al eliminar');
-        return await response.json();
+        // CAMBIO PRO: Eliminamos fetch y la IP. Usamos nuestra instancia 'api'.
+        // La URL final será automáticamente /api/recepcion/{id}
+        const response = await api.delete(`${API_URL}/${id}`);
+        return response.data;
     } catch (error) {
         console.error("Error en service deleteAsesor:", error);
-        throw error;
+        // Extraemos el mensaje de error del backend si existe
+        const mensaje = error.response?.data?.mensaje || 'Error al eliminar';
+        throw new Error(mensaje);
     }
 };

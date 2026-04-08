@@ -1,37 +1,40 @@
-import axios from 'axios';
+// 1. Importamos tu instancia configurada
+import api from '../api/axios'; 
 
-// const API_URL = 'http://localhost:3000/api/clientes';
-const API_URL = 'http://138.36.237.111:3000/api/clientes';
+// 2. Ruta relativa (la base '/api' ya viene en la instancia api)
+const API_URL = '/clientes';
 
 export const getClientes = async () => {
-    const res = await axios.get(API_URL);
+    // La petición final será /api/clientes
+    const res = await api.get(API_URL);
     return res.data;
 };
 
 export const createCliente = async (cliente) => {
-    const res = await axios.post(API_URL, cliente);
+    const res = await api.post(API_URL, cliente);
     return res.data;
 };
 
 export const updateCliente = async (id, clienteData) => {
-    // Asegúrate de usar backticks (``) para la plantilla de cadena
-    // const response = await fetch(`http://localhost:3000/api/clientes/${id}`, {
-    const response = await fetch(`http://138.36.237.111:3000/api/clientes/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(clienteData),
-    });
-
-    if (!response.ok) {
-        throw new Error('Error al actualizar el cliente');
+    try {
+        // CAMBIO PRO: Sustituimos 'fetch' con IP por nuestra instancia 'api'
+        // Esto es mucho más limpio y maneja los headers automáticamente
+        const res = await api.put(`${API_URL}/${id}`, clienteData);
+        return res.data;
+    } catch (error) {
+        console.error("Error al actualizar el cliente:", error);
+        const mensaje = error.response?.data?.mensaje || 'Error al actualizar el cliente';
+        throw new Error(mensaje);
     }
-    return await response.json();
 };
 
-// ESTA ES LA FUNCIÓN QUE TE FALTA:
 export const deleteCliente = async (id) => {
-    const res = await axios.delete(`${API_URL}/${id}`);
-    return res.data;
+    try {
+        const res = await api.delete(`${API_URL}/${id}`);
+        return res.data;
+    } catch (error) {
+        console.error("Error al eliminar cliente:", error);
+        const mensaje = error.response?.data?.mensaje || 'Error al eliminar cliente';
+        throw new Error(mensaje);
+    }
 };

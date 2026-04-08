@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // baseURL: 'http://localhost:3000/api'
-  baseURL: 'http://138.36.237.111:3000/api'
+  // Al usar solo /api, el navegador le pregunta al mismo servidor que le entregó la página
+  baseURL: '/api' 
 });
 
 export default api;

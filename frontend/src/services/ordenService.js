@@ -1,29 +1,32 @@
-import axios from 'axios';
+// 1. Importamos la instancia configurada con baseURL: '/api'
+import api from '../api/axios'; 
 
-// const API_URL = 'http://localhost:3000/api/ordenes';
-const API_URL = 'http://138.36.237.111:3000/api/ordenes';
+// 2. Ruta relativa para las órdenes
+const API_URL = '/ordenes';
 
 // 1. Obtener todas las órdenes
 export const getOrdenes = async () => {
-    const response = await axios.get(API_URL);
+    // La petición final será: /api/ordenes
+    const response = await api.get(API_URL);
     return response.data;
 };
 
 // 2. Crear una nueva orden
 export const createOrden = async (ordenData) => {
-    const response = await axios.post(API_URL, ordenData);
+    const response = await api.post(API_URL, ordenData);
     return response.data;
 };
 
 // 3. Actualizar una orden completa (Edición)
 export const updateOrden = async (id, ordenData) => {
-    const response = await axios.put(`${API_URL}/${id}`, ordenData);
+    const response = await api.put(`${API_URL}/${id}`, ordenData);
     return response.data;
 };
 
 // 4. Actualizar solo el estado de la orden
 export const updateEstadoOrden = async (id, nuevoEstado) => {
-    const response = await axios.patch(`${API_URL}/${id}/estado`, {
+    // Usamos patch como tenías definido, pero a través de la instancia api
+    const response = await api.patch(`${API_URL}/${id}/estado`, {
         nuevo_estado: nuevoEstado
     });
     return response.data;
