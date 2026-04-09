@@ -417,7 +417,6 @@ const OrdenesPage = () => {
                         .valor { text-align: right; }
                         
                         .footer { margin-top: 30px; font-size: 0.75rem; text-align: center; border-top: 1px solid #000; padding-top: 10px; }
-                        .firma { margin-top: 40px; border-top: 1px solid #999; width: 150px; margin-left: auto; margin-right: auto; }
                         
                         @media print {
                             body { padding: 0; }
@@ -436,9 +435,9 @@ const OrdenesPage = () => {
                                 </div>
                                 <div class="info-container">
                                     <div class="info-taller">
-                                        <strong>Nit:</strong> 123.456.789-0 <br>
-                                        <strong>📍</strong> Tu Dirección Aquí, Ciudad <br>
-                                        <strong>📞</strong> Tel: 300 000 0000
+                                        <strong>Nit:</strong> 901911501-6 <br>
+                                        <strong>📍</strong> Calle 9 # 7-83, Cartago <br>
+                                        <strong>📞</strong> Tel: 3117748294
                                     </div>
                                 </div>
                             </div>
@@ -463,7 +462,6 @@ const OrdenesPage = () => {
                         <div class="footer">
                             <p>Favor presentar este documento para retirar su equipo.</p>
                             <p><em>Gracias por confiar en nosotros.</em></p>
-                            <div class="firma">Recibido Conforme</div>
                         </div>
                     </div>
                 </body>
