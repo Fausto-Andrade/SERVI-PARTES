@@ -133,8 +133,11 @@ const OrdenesPage = () => {
     
     const mostrarCheckFinalizado = formData.estado === 'Entregado' && formData.estado_pago === 'Pagado';
 
+    //FOCO AL AGREGAR: Solo cuando el usuario hace clic físicamente en el botón
     const agregarRepuesto = () => {
         setRepuestos([...repuestos, { descripcion: '', valor: '' }]);
+        
+        // El foco se ejecuta DESPUÉS de que React actualiza el DOM
         setTimeout(() => {
             if (ultimoInputRef.current) {
                 ultimoInputRef.current.focus();
@@ -176,26 +179,27 @@ const OrdenesPage = () => {
             setHistorialAbonos([]);
         }
 
-        // 3. CARGAR DATOS DEL FORMULARIO
-        setFormData({
-            tipo_orden: orden.tipo_orden || 'nueva',
-            cliente_id: orden.cliente_id || '',
-            tecnico_id: orden.tecnico_id || '',
-            recibido_por: orden.recibido_por || '',
-            tipo_articulo: orden.tipo_articulo || 'Vehículo',
-            placa: orden.placa || '',
-            codigo_equipo: orden.codigo_equipo || '',
-            tipo_especifico: orden.tipo_especifico || '',
-            mano_obra: Math.floor(Number(orden.mano_obra || 0)),
-            requiere_factura: orden.requiere_factura || false,
-            factura_emitida: orden.factura_emitida || false,
-            estado_pago: orden.estado_pago || 'Pendiente',
-            abono_inicial: orden.abono_inicial || 0,
-            estado: orden.estado || 'Recibido'
-        });
+    // 3. CARGAR DATOS DEL FORMULARIO
+    setFormData({
+        tipo_orden: orden.tipo_orden || 'nueva',
+        cliente_id: orden.cliente_id || '',
+        tecnico_id: orden.tecnico_id || '',
+        recibido_por: orden.recibido_por || '',
+        tipo_articulo: orden.tipo_articulo || 'Vehículo',
+        placa: orden.placa || '',
+        codigo_equipo: orden.codigo_equipo || '',
+        tipo_especifico: orden.tipo_especifico || '',
+        // Usamos Math.floor como ya lo tenías para evitar decimales molestos en UI
+        mano_obra: Math.floor(Number(orden.mano_obra || 0)),
+        requiere_factura: orden.requiere_factura || false,
+        factura_emitida: orden.factura_emitida || false,
+        estado_pago: orden.estado_pago || 'Pendiente',
+        abono_inicial: orden.abono_inicial || 0,
+        estado: orden.estado || 'Recibido'
+    });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
     const limpiarFormulario = () => {
         setEditando(false);
@@ -215,31 +219,71 @@ const OrdenesPage = () => {
     };
 
     const handleSumarAbono = () => {
-        if (esOrdenYaCerradaBase) return;
-        const valorNuevoAbono = Number(montoASumar);
-        const saldoPendiente = totalGeneral - Number(formData.abono_inicial);
+    if (esOrdenYaCerradaBase) return;
+    
+    const valorNuevoAbono = Number(montoASumar);
+    
+    // CALCULAR SALDO PENDIENTE REAL
+    // totalGeneral es la suma de mano de obra + repuestos que ya tienes calculada
+    const saldoPendiente = totalGeneral - Number(formData.abono_inicial);
 
-        if (valorNuevoAbono <= 0 || !montoASumar) {
-            Swal.fire({ icon: 'warning', title: 'Monto inválido', text: 'Por favor, ingresa un valor mayor a cero para el abono.', confirmButtonColor: '#f39c12' });
-            return;
-        }
+    // 1. VALIDACIÓN: No permitir montos vacíos o menores a cero
+    if (valorNuevoAbono <= 0 || !montoASumar) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Monto inválido',
+            text: 'Por favor, ingresa un valor mayor a cero para el abono.',
+            confirmButtonColor: '#f39c12'
+        });
+        return;
+    }
 
-        if (valorNuevoAbono > saldoPendiente) {
-            Swal.fire({ icon: 'error', title: 'Monto excedido', html: `El abono <b>$${valorNuevoAbono.toLocaleString()}</b> supera el saldo pendiente.<br><br> Saldo actual: <b>$${saldoPendiente.toLocaleString()}</b>`, confirmButtonColor: '#e74c3c' });
-            return;
-        }
+    // VALIDACIÓN: No permitir que el abono supere el saldo
+    if (valorNuevoAbono > saldoPendiente) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Monto excedido',
+            html: `El abono <b>$${valorNuevoAbono.toLocaleString()}</b> supera el saldo pendiente.<br><br> 
+                   Saldo actual: <b>$${saldoPendiente.toLocaleString()}</b>`,
+            confirmButtonColor: '#e74c3c'
+        });
+        return;
+    }
 
-        const nuevoTotalAbonado = Number(formData.abono_inicial) + valorNuevoAbono;
-        const nuevoRegistro = { monto: valorNuevoAbono, fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-        const nuevoHistorial = [...historialAbonos, nuevoRegistro];
-        
-        setHistorialAbonos(nuevoHistorial);
-        if (idOrdenActual) { localStorage.setItem(`historial_orden_${idOrdenActual}`, JSON.stringify(nuevoHistorial)); }
-
-        setFormData(prev => ({ ...prev, abono_inicial: nuevoTotalAbonado, estado_pago: nuevoTotalAbonado === totalGeneral ? 'Pagado' : 'Parcial' }));
-        setMontoASumar('');
-        Swal.fire({ icon: 'success', title: 'Abono registrado', text: `Nuevo saldo: $${(totalGeneral - nuevoTotalAbonado).toLocaleString()}`, timer: 1500, showConfirmButton: false });
+    // PROCESO DE REGISTRO (Si pasa las validaciones)
+    const nuevoTotalAbonado = Number(formData.abono_inicial) + valorNuevoAbono;
+    
+    const nuevoRegistro = {
+        monto: valorNuevoAbono,
+        fecha: new Date().toLocaleDateString(),
+        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
+
+    const nuevoHistorial = [...historialAbonos, nuevoRegistro];
+    
+    // ACTUALIZAR ESTADO Y NAVEGADOR
+    setHistorialAbonos(nuevoHistorial);
+    if (idOrdenActual) {
+        localStorage.setItem(`historial_orden_${idOrdenActual}`, JSON.stringify(nuevoHistorial));
+    }
+
+    setFormData(prev => ({
+        ...prev,
+        abono_inicial: nuevoTotalAbonado,
+        // Si el nuevo total es igual al general, cambia a Pagado automáticamente
+        estado_pago: nuevoTotalAbonado === totalGeneral ? 'Pagado' : 'Parcial'
+    }));
+    
+    // LIMPIEZA Y NOTIFICACIÓN DE ÉXITO
+    setMontoASumar('');
+    Swal.fire({ 
+        icon: 'success', 
+        title: 'Abono registrado', 
+        text: `Nuevo saldo: $${(totalGeneral - nuevoTotalAbonado).toLocaleString()}`,
+        timer: 1500, 
+        showConfirmButton: false 
+    });
+};
 
     const abrirHistorial = (codigo) => {
         const filtrado = ordenes.filter(o => o.codigo_equipo === codigo && o.estado === 'Entregado');
@@ -250,12 +294,15 @@ const OrdenesPage = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        
         setFormData(prev => {
             const nuevoValor = type === 'checkbox' ? checked : value;
             let actualizacion = { ...prev, [name]: nuevoValor };
+            
             if (name === 'estado_pago') {
-                if (nuevoValor === 'Pagado') { actualizacion.abono_inicial = totalGeneral; } 
-                else if (nuevoValor === 'Parcial' || nuevoValor === 'Pendiente') {
+                if (nuevoValor === 'Pagado') {
+                    actualizacion.abono_inicial = totalGeneral;
+                } else if (nuevoValor === 'Parcial' || nuevoValor === 'Pendiente') {
                     const sumaHistorial = historialAbonos.reduce((acc, ab) => acc + Number(ab.monto), 0);
                     actualizacion.abono_inicial = sumaHistorial;
                 }
@@ -272,14 +319,21 @@ const OrdenesPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (esOrdenYaCerradaBase) { return Swal.fire({ icon: 'info', title: 'Orden Cerrada', text: 'Esta orden ya ha sido finalizada y no permite más cambios.' }); }
+        
+        if (esOrdenYaCerradaBase) {
+            return Swal.fire({ icon: 'info', title: 'Orden Cerrada', text: 'Esta orden ya ha sido finalizada y no permite más cambios.' });
+        }
 
         if (!editando && formData.tipo_orden === 'nueva') {
             const duplicada = ordenes.find(o => o.codigo_equipo === formData.codigo_equipo && o.estado !== 'Entregado');
-            if (duplicada) { return Swal.fire({ icon: 'error', title: 'Código Duplicado', text: `Ya existe una orden abierta con el código ${formData.codigo_equipo}` }); }
+            if (duplicada) {
+                return Swal.fire({ icon: 'error', title: 'Código Duplicado', text: `Ya existe una orden abierta con el código ${formData.codigo_equipo}` });
+            }
         }
 
-        const procedimientos = repuestos.filter(r => r.descripcion.trim() !== '').map(r => `${r.descripcion} ($${r.valor || 0})`).join(', ');
+        const procedimientos = repuestos
+            .filter(r => r.descripcion.trim() !== '')
+            .map(r => `${r.descripcion} ($${r.valor || 0})`).join(', ');
 
         try {
             const sesionSring = localStorage.getItem('usuario'); 
@@ -305,22 +359,35 @@ const OrdenesPage = () => {
                 await createOrden(dataAGuardar);
                 await Swal.fire({ icon: 'success', title: '¡Orden Creada!', timer: 1500, showConfirmButton: false });
             }
+            
             limpiarFormulario();
             cargarTodo();
         } catch (error) { 
             console.error("Error detallado del servidor:", error.response?.data || error.message);
-            Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.error || error.response?.data?.message || 'No se pudo procesar la solicitud' });
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: error.response?.data?.error || error.response?.data?.message || 'No se pudo procesar la solicitud' 
+            });
         }
     };
 
     const ordenesFiltradas = ordenes.filter(o => {
-        const coincideBusqueda = o.nombre_cliente?.toLowerCase().includes(busqueda.toLowerCase()) || o.codigo_equipo?.toLowerCase().includes(busqueda.toLowerCase()) || o.placa?.toLowerCase().includes(busqueda.toLowerCase());
+        const coincideBusqueda = 
+            o.nombre_cliente?.toLowerCase().includes(busqueda.toLowerCase()) ||
+            o.codigo_equipo?.toLowerCase().includes(busqueda.toLowerCase()) ||
+            o.placa?.toLowerCase().includes(busqueda.toLowerCase());
+        
         const esCerrada = o.estado === 'Entregado';
+        
         return coincideBusqueda && (verHistorialGlobal ? esCerrada : !esCerrada);
     });
 
     const handlePrint = (orden) => {
+    // Creamos una ventana nueva para el ticket de impresión
         const printWindow = window.open('', '_blank');
+    
+        // Aquí defines el diseño de tu ticket (HTML + CSS básico)
         printWindow.document.write(`
             <html>
                 <head>                    
@@ -328,49 +395,86 @@ const OrdenesPage = () => {
                         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; color: #333; }
                         .ticket { max-width: 400px; margin: 0 auto; border: 1px solid #eee; padding: 15px; }
                         .header { text-align: center; margin-bottom: 20px; }
-                        .header-content { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+                        .header-content {
+                            display: flex;
+                            justify-content: space-between; /* Logo a la izquierda, texto a la derecha */
+                            align-items: center;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 15px;
+                            margin-bottom: 20px;
+                        }
                         .logo { max-width: 100px; height: auto; margin-bottom: 10px; }
-                        .info-container { text-align: right; }
+                        .info-container {
+                            text-align: right;
+                        }
                         .empresa-nombre { font-size: 1.4rem; font-weight: bold; margin: 0; color: #000; }
                         .info-taller { font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+                        
                         .titulo-orden { background: #f4f4f4; text-align: center; padding: 5px; font-weight: bold; margin-bottom: 15px; border: 1px solid #ddd; }
+                        
                         .fila { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px dotted #eee; padding-bottom: 2px; }
                         .label { font-weight: bold; color: #555; }
                         .valor { text-align: right; }
+                        
                         .footer { margin-top: 30px; font-size: 0.75rem; text-align: center; border-top: 1px solid #000; padding-top: 10px; }
-                        @media print { body { padding: 0; } .ticket { border: none; max-width: 100%; } .no-print { display: none; } }
+                        
+                        @media print {
+                            body { padding: 0; }
+                            .ticket { border: none; max-width: 100%; }
+                            .no-print { display: none; }
+                        }
                     </style>
                 </head>
                 <body>
                 <title>ARRANQUES Y ALTERNADORES LA 8va</title>
                     <div class="ticket">
                         <div class="header">
-                            <div class="header-content">
-                                <div class="logo-container"><img src="${logo}" alt="Logo" class="logo" onerror="this.style.display='none'"></div>
-                                <div class="info-container"><div class="info-taller"><strong>Nit:</strong> 901911501-6 <br><strong>📍</strong> Calle 9 # 7-83, Cartago <br><strong>📞</strong> Tel: 3117748294</div></div>
+                            <div class="header-content", >
+                                <div class="logo-container">
+                                    <img src="${logo}" alt="Logo" class="logo" onerror="this.style.display='none'">
+                                </div>
+                                <div class="info-container">
+                                    <div class="info-taller">
+                                        <strong>Nit:</strong> 901911501-6 <br>
+                                        <strong>📍</strong> Calle 9 # 7-83, Cartago <br>
+                                        <strong>📞</strong> Tel: 3117748294
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.id_orden_servicio}</div>
+
+                       
+                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.codigo_equipo}</div>
+
                         <div class="fila"><span class="label">Fecha:</span> <span class="valor">${new Date(orden.fecha_ingreso).toLocaleDateString()}</span></div>
                         <div class="fila"><span class="label">Cliente:</span> <span class="valor">${orden.nombre_cliente || 'General'}</span></div>
                         <div class="fila"><span class="label">Contacto:</span> <span class="valor">${orden.contacto || '-'}</span></div>
                         <div class="fila"><span class="label">Recibido por:</span> <span class="valor">${orden.recibido_por || '-'}</span></div>
+                        
                         <div style="margin: 15px 0; font-weight: bold; font-size: 0.9rem; ">DATOS DEL EQUIPO:</div>
+                        
                         <div class="fila"><span class="label">Equipo:</span> <span class="valor">${orden.tipo_especifico}</span></div>
                         <div class="fila"><span class="label">Placa/Código:</span> <span class="valor">${orden.placa || orden.codigo_equipo}</span></div>
                         <div class="fila"><span class="label">Servicio:</span> <span class="valor">${orden.categoria_servicio}</span></div>
                         <div class="fila"><span class="label">Mano de obra:</span> <span class="valor">${orden.mano_obra}</span></div>
                         <div class="fila"><span class="label">Total:</span> <span class="valor">${orden.total}</span></div>
                         <div class="fila"><span class="label">Estado:</span> <span class="valor"><strong>${orden.estado}</strong></span></div>
-                        <div class="footer"><p>Favor presentar este documento para retirar su equipo.</p><p><em>Gracias por confiar en nosotros.</em></p></div>
+
+                        <div class="footer">
+                            <p>Favor presentar este documento para retirar su equipo.</p>
+                            <p><em>Gracias por confiar en nosotros.</em></p>
+                        </div>
                     </div>
                 </body>
             </html>
         `);
-        printWindow.document.close();
-        printWindow.onload = () => { printWindow.print(); printWindow.close(); };
+        
+            printWindow.document.close();
+            printWindow.onload = () => {
+            printWindow.print(); // Abre el diálogo de impresión del sistema
+            printWindow.close(); // Cerrar despues de imprimir
+        };
     };
-
     const registrosPaginados = ordenesFiltradas.slice((paginaActual - 1) * registrosPorPagina, paginaActual * registrosPorPagina);
     const totalPaginas = Math.ceil(ordenesFiltradas.length / registrosPorPagina);
 
@@ -385,10 +489,10 @@ const OrdenesPage = () => {
     const searchStyle = { padding: '10px 20px', borderRadius: '25px', border: '1px solid #ddd', width: '350px', outline: 'none' };
     const tableContainer = { background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' };
     const thStyle = { padding: '15px', textAlign: 'center', fontSize: '0.85rem' };
-    const tdStyle = { padding: '15px', textAlign: 'cennter', fontSize: '0.85rem', borderBottom: '1px solid #eee' };
+    const tdStyle = { padding: '15px', textAlign: 'center', fontSize: '0.85rem', borderBottom: '1px solid #eee' };
     const actionBtn = { background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', marginRight: '10px' };
-    const btnDeleteStyle = { background: '#ff7675', color: 'white', border: 'none', borderRadius: '5px', width: '38px', height: '38px', cursor: 'pointer' };
     const billingGrid = { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px', width: '100%'};
+    const btnDeleteStyle = { background: '#ff7675', color: 'white', border: 'none', borderRadius: '5px', width: '38px', height: '38px', cursor: 'pointer' };
     const modalOverlay = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
     const modalContent = { backgroundColor: 'white', padding: '30px', borderRadius: '15px', width: '80%', maxWidth: '900px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' };
     const btnClose = { background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#666' };
