@@ -54,12 +54,10 @@ const ClientesPage = () => {
         const { name, value } = e.target;
 
         if (name === 'contacto') {
-            // Solo permite números (y campo vacío para permitir borrar)
             if (value === '' || /^\d+$/.test(value)) {
                 setFormData({ ...formData, [name]: value });
             }
         } else if (name === 'nombre') {
-            // Solo permite letras, espacios, eñes y acentos
             if (value === '' || /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
                 setFormData({ ...formData, [name]: value });
             }
@@ -71,21 +69,24 @@ const ClientesPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // VALIDACIÓN DE DUPLICADOS (Nombre y Teléfono)
-            const esDuplicado = clientes.some(c => 
-                c.nombre.toLowerCase().trim() === formData.nombre.toLowerCase().trim() || 
-                String(c.contacto).trim() === String(formData.contacto).trim() &&
-                c.id !== formData.id // Evita que se autodetecte al editar el mismo
-            );
+            // Lógica de Validación de Duplicados Ajustada
+            const esDuplicado = clientes.some(c => {
+                // Verificamos si el nombre o contacto ya existen en OTRO registro diferente al actual
+                const coincidenciaNombre = c.nombre.toLowerCase().trim() === formData.nombre.toLowerCase().trim();
+                const coincidenciaContacto = String(c.contacto).trim() === String(formData.contacto).trim();
+                const esDiferenteId = String(c.id) !== String(formData.id);
+
+                return (coincidenciaNombre || coincidenciaContacto) && esDiferenteId;
+            });
 
             if (esDuplicado) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Cliente Duplicado',
-                    text: 'Ya existe un cliente registrado con ese mismo nombre.',
+                    title: 'Dato Duplicado',
+                    text: 'Ya existe otro cliente con este mismo nombre o número de contacto.',
                     confirmButtonColor: '#3261c0'
                 });
-                return; // Detiene la ejecución
+                return; 
             }
 
             if (editando) {
@@ -113,7 +114,6 @@ const ClientesPage = () => {
         setFormData({ id: '', nombre: '', contacto: '', email: '', direccion: '' });
     };
 
-    
     return (
         <div style={{ padding: '30px', maxWidth: '1200px', margin: 'auto' }}>
             <header style={{ marginBottom: '30px' }}>
@@ -177,7 +177,7 @@ const ClientesPage = () => {
 
             {/* --- TABLA --- */}
             <div style={tableContainer}>
-                <table width="100%" style={{ borderCollapse: 'collapse' }}>
+                <table width="100%" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                     <thead>
                         <tr style={{ background: '#2c3e50', color: 'white' }}>
                             <th style={thStyle}>Nombre del Cliente</th>
@@ -190,10 +190,9 @@ const ClientesPage = () => {
                             <tr key={c.id} style={trStyle}>
                                 <td style={tdStyle}>
                                     <div style={{ fontWeight: 'bold', color: '#2c3e50' }}>{c.nombre}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#95a5a6' }}></div>
                                 </td>
                                 <td style={tdStyle}>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         {c.contacto ? (
                                             <a 
                                                 href={`https://wa.me/${String(c.contacto).replace(/\s+/g, '')}?text=Hola%20${encodeURIComponent(c.nombre)},%20te%20saludamos%20de%20La%208...`} 
@@ -209,8 +208,9 @@ const ClientesPage = () => {
                                     </div>
                                 </td>
                                 <td style={tdStyle}>
-                                    <button onClick={() => prepararEdicion(c)} style={actionBtn}>✏️</button>
-                                    {/* <button onClick={() => eliminar(c.id)} style={{ ...actionBtn, color: '#e74c3c' }}>🗑️</button> */}
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                        <button onClick={() => prepararEdicion(c)} style={actionBtn}>✏️</button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -254,10 +254,10 @@ const btnUpdate = { padding: '12px 20px', background: '#f39c12', color: 'white',
 const btnCancel = { padding: '12px 20px', background: '#bdc3c7', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' };
 const searchStyle = { padding: '10px 15px', borderRadius: '25px', border: '1px solid #ddd', width: '300px', outline: 'none' };
 const tableContainer = { padding: '15px', background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' };
-const thStyle = { padding: '10px 135px', textAlign: 'left' };
-const tdStyle = { padding: '15px' };
+const thStyle = { padding: '12px 15px', textAlign: 'center' }; // Centrado
+const tdStyle = { padding: '15px', textAlign: 'center' }; // Centrado
 const trStyle = { borderBottom: '1px solid #eee' };
-const actionBtn = { background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', marginRight: '10px' };
+const actionBtn = { background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' };
 
 const paginationContainer = {
     display: 'flex',

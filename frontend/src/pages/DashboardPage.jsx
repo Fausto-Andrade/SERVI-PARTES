@@ -49,7 +49,6 @@ const DashboardPage = () => {
     const normalizarFecha = (fechaStr) => {
         if (!fechaStr) return new Date();
         const d = new Date(fechaStr);
-        // Si la fecha viene de un input tipo date o string ISO, ajustamos para que se lea como local
         if (fechaStr.includes('T')) return d; 
         return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
     };
@@ -67,7 +66,6 @@ const DashboardPage = () => {
             fechaFin = new Date(anioActual, params.mesIndex + 1, 0, 23, 59, 59);
             setPeriodo(`Mes: ${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechaInicio)}`);
         } else if (tipo === 'rango') {
-            // Se usa split para evitar el desfase de zona horaria del constructor Date
             const [y1, m1, d1] = params.desde.split('-').map(Number);
             const [y2, m2, d2] = params.hasta.split('-').map(Number);
             fechaInicio = new Date(y1, m1 - 1, d1, 0, 0, 0);
@@ -131,6 +129,7 @@ const DashboardPage = () => {
 
     // --- LÓGICA DE FILTRADO Y PAGINACIÓN ---
     const ordenesVisiblesBase = ordenesFiltradas.filter(o => 
+        (o.id?.toString() || "").includes(busqueda) ||
         (o.nombre_tecnico?.toLowerCase() || "").includes(busqueda.toLowerCase()) ||
         (o.categoria_servicio?.toLowerCase() || "").includes(busqueda.toLowerCase())
     );
@@ -238,6 +237,7 @@ const DashboardPage = () => {
                         <thead>
                             <tr style={{ borderBottom: '2px solid #eee', color: '#7f8c8d' }}>
                                 <th style={{ padding: '12px' }}>Fecha</th>
+                                <th style={{ padding: '12px' }}>🔢 Código</th>
                                 <th style={{ padding: '12px' }}>👨‍🔧 Técnico</th>
                                 <th style={{ padding: '12px' }}>Servicio</th>
                                 <th style={{ padding: '12px' }}>Mano de Obra</th>
@@ -249,6 +249,7 @@ const DashboardPage = () => {
                                 return (
                                     <tr key={idx} style={{ borderBottom: '1px solid #f9f9f9', color: '#34495e' }}>
                                         <td style={{ padding: '12px' }}>{fechaVisual.toLocaleDateString('es-ES')}</td>
+                                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#2c3e50' }}>{o.codigo_equipo}</td>
                                         <td style={{ padding: '12px', fontWeight: 'bold' }}>{o.nombre_tecnico || 'N/A'}</td>
                                         <td style={{ padding: '12px' }}>{o.categoria_servicio || 'General'}</td>
                                         <td style={{ padding: '12px', color: '#27ae60', fontWeight: 'bold' }}>${(parseFloat(o.mano_obra) || 0).toLocaleString()}</td>
@@ -256,7 +257,7 @@ const DashboardPage = () => {
                                 );
                             }) : (
                                 <tr>
-                                    <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: '#bdc3c7' }}>No hay registros para mostrar.</td>
+                                    <td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: '#bdc3c7' }}>No hay registros para mostrar.</td>
                                 </tr>
                             )}
                         </tbody>
