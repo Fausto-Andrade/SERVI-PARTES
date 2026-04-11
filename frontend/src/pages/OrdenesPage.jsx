@@ -387,6 +387,7 @@ const OrdenesPage = () => {
     const thStyle = { padding: '15px', textAlign: 'center', fontSize: '0.85rem' };
     const tdStyle = { padding: '15px', textAlign: 'cennter', fontSize: '0.85rem', borderBottom: '1px solid #eee' };
     const actionBtn = { background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', marginRight: '10px' };
+    const btnDeleteStyle = { background: '#ff7675', color: 'white', border: 'none', borderRadius: '5px', width: '38px', height: '38px', cursor: 'pointer' };
     const billingGrid = { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px', width: '100%'};
     const modalOverlay = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
     const modalContent = { backgroundColor: 'white', padding: '30px', borderRadius: '15px', width: '80%', maxWidth: '900px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' };
