@@ -318,17 +318,22 @@ const OrdenesPage = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (esOrdenYaCerradaBase) {
-            return Swal.fire({ icon: 'info', title: 'Orden Cerrada', text: 'Esta orden ya ha sido finalizada y no permite más cambios.' });
+       e.preventDefault();
+        if (esOrdenYaCerradaBase) return;
+
+        // CONDICIÓN SOLICITADA: Para finalizar (Entregado), debe estar Pagado totalmente
+        if (formData.estado === 'Entregado' && formData.estado_pago !== 'Pagado') {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'No se puede cerrar la orden',
+                text: 'Para marcar la orden como "Entregado", el estado de pago debe ser "Pagado" (Saldo $0).',
+                confirmButtonColor: '#3498db'
+            });
         }
 
         if (!editando && formData.tipo_orden === 'nueva') {
             const duplicada = ordenes.find(o => o.codigo_equipo === formData.codigo_equipo && o.estado !== 'Entregado');
-            if (duplicada) {
-                return Swal.fire({ icon: 'error', title: 'Código Duplicado', text: `Ya existe una orden abierta con el código ${formData.codigo_equipo}` });
-            }
+            if (duplicada) return Swal.fire({ icon: 'error', title: 'Código Duplicado', text: `Ya existe una orden abierta con el código ${formData.codigo_equipo}` });
         }
 
         const procedimientos = repuestos
@@ -359,16 +364,10 @@ const OrdenesPage = () => {
                 await createOrden(dataAGuardar);
                 await Swal.fire({ icon: 'success', title: '¡Orden Creada!', timer: 1500, showConfirmButton: false });
             }
-            
             limpiarFormulario();
             cargarTodo();
         } catch (error) { 
-            console.error("Error detallado del servidor:", error.response?.data || error.message);
-            Swal.fire({ 
-                icon: 'error', 
-                title: 'Error', 
-                text: error.response?.data?.error || error.response?.data?.message || 'No se pudo procesar la solicitud' 
-            });
+            Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'Error al procesar' });
         }
     };
 
@@ -443,8 +442,7 @@ const OrdenesPage = () => {
                             </div>
                         </div>
 
-                       
-                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.codigo_equipo}</div>
+                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.id_orden_servicio}</div>
 
                         <div class="fila"><span class="label">Fecha:</span> <span class="valor">${new Date(orden.fecha_ingreso).toLocaleDateString()}</span></div>
                         <div class="fila"><span class="label">Cliente:</span> <span class="valor">${orden.nombre_cliente || 'General'}</span></div>
@@ -489,7 +487,7 @@ const OrdenesPage = () => {
     const searchStyle = { padding: '10px 20px', borderRadius: '25px', border: '1px solid #ddd', width: '350px', outline: 'none' };
     const tableContainer = { background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' };
     const thStyle = { padding: '15px', textAlign: 'center', fontSize: '0.85rem' };
-    const tdStyle = { padding: '15px', textAlign: 'center', fontSize: '0.85rem', borderBottom: '1px solid #eee' };
+    const tdStyle = { padding: '15px', fontSize: '0.85rem', borderBottom: '1px solid #eee' };
     const actionBtn = { background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', marginRight: '10px' };
     const billingGrid = { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px', width: '100%'};
     const btnDeleteStyle = { background: '#ff7675', color: 'white', border: 'none', borderRadius: '5px', width: '38px', height: '38px', cursor: 'pointer' };
@@ -499,7 +497,7 @@ const OrdenesPage = () => {
     const thSmall = { padding: '10px', fontSize: '0.75rem', textAlign: 'left', color: '#7f8c8d' };
     const tdSmall = { padding: '10px', fontSize: '0.8rem' };
 
-     return (
+   return (
         <div style={{ padding: '20px', maxWidth: '1366px', margin: 'auto' }}>
             {/* MODAL DE HISTORIAL POR EQUIPO */}
             {mostrarHistorial && (
