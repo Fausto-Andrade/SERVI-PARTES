@@ -442,7 +442,7 @@ const OrdenesPage = () => {
                             </div>
                         </div>
 
-                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.id_orden_servicio}</div>
+                        <div class="titulo-orden">ORDEN DE SERVICIO # ${orden.codigo_equipo}</div>
 
                         <div class="fila"><span class="label">Fecha:</span> <span class="valor">${new Date(orden.fecha_ingreso).toLocaleDateString()}</span></div>
                         <div class="fila"><span class="label">Cliente:</span> <span class="valor">${orden.nombre_cliente || 'General'}</span></div>
